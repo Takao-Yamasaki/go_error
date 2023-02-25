@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"fmt"
 	"strconv"
 )
@@ -22,28 +23,22 @@ func getMyError(err error) error {
 	return &MyError{err}
 }
 
-// 普通の型アサーションを使用する場合
+// errors.Asを使用する場合
 func main() {
-	// err1: strconv.NumError型
-	// err2: 内部にstrconv.NumError型を持ったMyError型
-
 	var err1, err2 error
 
-	_, err1 = strconv.Atoi("a")
-	err2 = getMyError(err1)
+	_, err1 = strconv.Atoi("a") // err1: strconv.NumError型
+	err2 = getMyError(err1)     // err2: 内部にstrconv.NumError型を持ったMyError型
 
-	var ok bool
+	var targetNumErr *strconv.NumError
+	// NumError型のエラーインターフェースをNumErrorに変換 -> true
+	fmt.Println(errors.As(err1, &targetNumErr))
+	// MyError(内部にNumError型)のエラーインターフェースをNumErrorに変換 -> true
+	fmt.Println(errors.As(err2, &targetNumErr))
 
-	_, ok = err1.(*strconv.NumError)
-	fmt.Println(ok) // true
-
-	// err2をNumErrorにアサーションすることができない
-	_, ok = err2.(*strconv.NumError)
-	fmt.Println(ok) // false
-
-	_, ok = err1.(*MyError)
-	fmt.Println(ok) // false
-
-	_, ok = err2.(*MyError)
-	fmt.Println(ok) // true
+	var targetMyErr *MyError
+	// NumError型のエラーインターフェースをMyErrorに変換 -> false
+	fmt.Println(errors.As(err1, &targetMyErr))
+	// MyError(内部にNumError型)のエラーインターフェースをMyErrorに変換 -> true
+	fmt.Println(errors.As(err2, &targetMyErr))
 }
